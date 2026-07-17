@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftPoint Scan</title>
+  <link rel="manifest" href="scan-manifest.json?v=1233" />
+  <link rel="icon" href="icon-192.svg?v=1233" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg?v=1233" />
+  <link rel="stylesheet" href="style.css?v=1233" />
+  <meta name="theme-color" content="#1f2937" />
+</head>
+<body class="scan-only-app">
+  <div class="app-shell scan-only-shell">
+    <header class="top-header">
+      <div>
+        <h1>ShiftPoint Scan</h1>
+        <p data-i18n="app.subtitle">Érkezés és távozás kezelése</p>
+      </div>
+      <div class="language-switcher" aria-label="Nyelvváltó">
+        <button type="button" class="language-btn" data-lang="hu">HU</button>
+        <button type="button" class="language-btn" data-lang="ro">RO</button>
+        <button type="button" class="language-btn" data-lang="en">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section id="scanPage" class="page active">
+        <div class="card scan-kiosk-card">
+          <div id="scanActionPanel" class="scan-kiosk-actions">
+            <button type="button" id="scanCheckInButton" class="scan-action-button scan-action-in" data-i18n="scan.checkIn">
+              Bejelentkezés
+            </button>
+            <button type="button" id="scanCheckOutButton" class="scan-action-button scan-action-out" data-i18n="scan.checkOut">
+              Kijelentkezés
+            </button>
+          </div>
+
+          <div id="scanActivePanel" class="scan-kiosk-active hidden">
+            <h2 id="scanActionTitle" data-i18n="scan.showQrCode">Mutasd a QR-kódot a kamerának</h2>
+            <div id="scannerCameraBox" class="scanner-camera-box">
+              <video id="scannerVideo" class="scanner-video" autoplay muted playsinline></video>
+              <div class="scanner-frame"></div>
+            </div>
+            <p id="scannerStatus" class="scanner-status scanner-status-info"></p>
+            <div id="scannerResult" class="scan-result hidden"></div>
+            <button type="button" id="scanCancelButton" class="secondary-btn scan-cancel-button" data-i18n="scan.cancel">
+              Mégse
+            </button>
+          </div>
+
+          <div id="scanConfirmationPanel" class="scan-kiosk-confirmation hidden">
+            <strong id="scanConfirmationTitle"></strong>
+            <span id="scanConfirmationName"></span>
+            <span id="scanConfirmationTime"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=1233"></script>
+  <script src="language.js?v=1233"></script>
+  <script src="storage.js?v=1233"></script>
+  <script src="scanner.js?v=1233"></script>
+  <script src="export.js?v=1233"></script>
+  <script src="app.js?v=1233"></script>
+</body>
+</html>

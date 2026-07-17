@@ -1,0 +1,1063 @@
+﻿<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ShiftPoint</title>
+
+  <link rel="manifest" href="manifest.json?v=1242" />
+  <link rel="icon" href="icon-192.svg?v=1242" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg?v=1242" />
+  <link rel="stylesheet" href="flatpickr.min.css?v=1242" />
+  <link rel="stylesheet" href="style.css?v=1242">
+
+  <meta name="theme-color" content="#1f2937" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true"><i data-lucide="scan-line"></i></span>
+        <div>
+          <h1 data-i18n="app.title">ShiftPoint</h1>
+          <p data-i18n="app.subtitle">Érkezés és távozás kezelése</p>
+        </div>
+      </div>
+
+      <div class="language-switcher" aria-label="Nyelvváltó">
+        <button type="button" class="language-btn" data-lang="hu">HU</button>
+        <button type="button" class="language-btn" data-lang="ro">RO</button>
+        <button type="button" class="language-btn" data-lang="en">EN</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-menu" aria-label="Főmenü">
+        <span class="menu-section-label" data-i18n="menu.groupWork">Napi munka</span>
+        <button type="button" class="menu-btn active" data-page="scanPage"><i data-lucide="keyboard" aria-hidden="true"></i><span data-i18n="menu.scan">Beolvasás</span></button>
+        <button type="button" class="menu-btn" data-page="insidePage"><i data-lucide="log-in" aria-hidden="true"></i><span data-i18n="menu.currentlyInside">Bent lévők</span></button>
+        <button type="button" class="menu-btn" data-page="attendancePage"><i data-lucide="clipboard-list" aria-hidden="true"></i><span data-i18n="menu.attendanceList">Jelenléti lista</span></button>
+        <button type="button" class="menu-btn" data-page="profilePage"><i data-lucide="contact" aria-hidden="true"></i><span data-i18n="menu.employeeProfile">Dolgozói adatlap</span></button>
+
+        <span class="menu-section-label" data-i18n="menu.groupEmployees">Dolgozók</span>
+        <button type="button" class="menu-btn" data-page="employeesPage"><i data-lucide="users-round" aria-hidden="true"></i><span data-i18n="menu.employees">Dolgozók</span></button>
+        <button type="button" class="menu-btn" data-page="cardsPage"><i data-lucide="badge" aria-hidden="true"></i><span data-i18n="menu.cards">Kártyák nyomtatása</span></button>
+
+        <span class="menu-section-label" data-i18n="menu.groupReports">Kimutatások</span>
+        <button type="button" class="menu-btn" data-page="monthlyAccountingPage"><i data-lucide="calendar-range" aria-hidden="true"></i><span data-i18n="menu.monthlyAccounting">Havi elszámolás</span></button>
+        <button type="button" class="menu-btn" data-page="vacationTrackerPage"><i data-lucide="calendar-check" aria-hidden="true"></i><span data-i18n="menu.vacationTracker">Szabadságkövető</span></button>
+        <button type="button" class="menu-btn" data-page="statisticsPage"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span data-i18n="menu.statistics">Vezetői áttekintés</span></button>
+        <button type="button" class="menu-btn" data-page="exportPage"><i data-lucide="database-backup" aria-hidden="true"></i><span data-i18n="menu.exportImport">Export / Import</span></button>
+
+        <span class="menu-section-label" data-i18n="menu.groupSystem">Rendszer</span>
+        <button type="button" class="menu-btn" data-page="settingsPage"><i data-lucide="settings" aria-hidden="true"></i><span data-i18n="menu.settings">Beállítások</span></button>
+      </nav>
+
+      <main class="main-content">
+        <section id="scanPage" class="page active">
+          <div class="card">
+            <h2 data-i18n="scan.title">Kézi bejegyzés</h2>
+            <p data-i18n="scan.description">Dolgozói kód kézi rögzítése érkezéshez vagy távozáshoz.</p>
+
+            <div class="dashboard-strip" aria-label="Gyors állapot">
+              <div class="dashboard-stat">
+                <span data-i18n="dashboard.insideNow">Bent most</span>
+                <strong id="dashboardInsideCount">0</strong>
+              </div>
+
+              <div class="dashboard-stat">
+                <span data-i18n="dashboard.todayEvents">Mai események</span>
+                <strong id="dashboardTodayEvents">0</strong>
+              </div>
+
+              <div class="dashboard-stat">
+                <span data-i18n="dashboard.openDays">Nyitott napok</span>
+                <strong id="dashboardOpenDays">0</strong>
+              </div>
+
+              <div class="dashboard-stat">
+                <span data-i18n="dashboard.activeEmployees">Aktív dolgozók</span>
+                <strong id="dashboardActiveEmployees">0</strong>
+              </div>
+            </div>
+
+            <div class="button-row">
+              <a href="scan.html" class="secondary-btn" data-i18n="scan.openStandalone">
+                Scan terminál megnyitása
+              </a>
+            </div>
+
+            <div class="scanner-actions">
+              <button type="button" id="startScannerButton" class="primary-btn" data-i18n="scan.startCamera">
+                Kamera indítása
+              </button>
+              <button type="button" id="stopScannerButton" class="secondary-btn" data-i18n="scan.stopCamera" disabled>
+                Kamera leállítása
+              </button>
+              <button type="button" id="switchCameraButton" class="secondary-btn" data-i18n="scan.switchToFrontCamera">
+                Elülső kamera használata
+              </button>
+            </div>
+
+            <div id="scannerCameraBox" class="scanner-camera-box">
+              <video id="scannerVideo" class="scanner-video" autoplay muted playsinline></video>
+              <div class="scanner-frame"></div>
+            </div>
+
+            <div class="manual-scan-box">
+              <label for="manualScanInput" data-i18n="scan.manualLabel">Dolgozói kód</label>
+
+              <div class="manual-scan-row">
+                <input
+                  id="manualScanInput"
+                  type="text"
+                  data-i18n-placeholder="scan.manualPlaceholder"
+                  placeholder="Pl. EMP-001"
+                />
+
+                <button type="button" id="manualScanButton" class="primary-btn" data-i18n="scan.manualButton">
+                  Bejegyzés mentése
+                </button>
+              </div>
+            </div>
+
+            <p id="scannerStatus" class="scanner-status scanner-status-info" data-i18n="scan.statusReady">
+              Írd be a dolgozói kódot.
+            </p>
+
+            <div id="scannerResult" class="scan-result">
+              <strong data-i18n="scan.noResultTitle">Nincs beolvasott dolgozó</strong>
+              <span data-i18n="scan.noResultText">Indítsd el a kamerát vagy írd be kézzel a dolgozói kódot.</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="employeesPage" class="page">
+          <div class="card">
+            <h2 data-i18n="employees.title">Dolgozók</h2>
+            <p data-i18n="employees.description">Itt lehet dolgozókat hozzáadni és kezelni.</p>
+
+            <form id="employeeForm" class="employee-form">
+              <input id="employeeEditingIdInput" type="hidden" />
+
+              <div class="form-grid">
+                <div>
+                 <label for="employeeCodeInput" data-i18n="employee.code">Dolgozói kód</label>
+                 <input id="employeeCodeInput" type="text" readonly />
+              </div>
+
+              <div>
+                <label for="employeeNameInput" data-i18n="employee.name">Név</label>
+                <input
+                  id="employeeNameInput"
+                  type="text"
+                  data-i18n-placeholder="employee.namePlaceholder"
+                  placeholder="Dolgozó neve"
+                />
+              </div>
+
+              <div>
+                <label for="employeeDepartmentInput" data-i18n="employee.department">Részleg</label>
+                <input
+                  id="employeeDepartmentInput"
+                  type="text"
+                  data-i18n-placeholder="employee.departmentPlaceholder"
+                  placeholder="Pl. Gyártás"
+                />
+              </div>
+
+              <div>
+                <label for="employeeNoteInput" data-i18n="employee.note">Megjegyzés</label>
+                <input
+                  id="employeeNoteInput"
+                  type="text"
+                  data-i18n-placeholder="employee.notePlaceholder"
+                  placeholder="Megjegyzés"
+                />
+              </div>
+             </div>
+
+             <label class="checkbox-row">
+               <input id="employeeActiveInput" type="checkbox" checked />
+               <span data-i18n="employee.active">Aktív dolgozó</span>
+             </label>
+
+             <label class="checkbox-row">
+               <input id="employeeLunchBreakInput" type="checkbox" checked />
+               <span data-i18n="employee.lunchBreakEnabled">Ebédszünet levonása</span>
+             </label>
+
+             <div class="button-row">
+               <button type="submit" class="primary-btn" data-i18n="employee.save">
+                 Dolgozó mentése
+               </button>
+
+               <button type="button" id="employeeResetButton" class="secondary-btn" data-i18n="employee.new">
+                 Új dolgozó
+               </button>
+             </div>
+           </form>
+
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="employee.code">Dolgozói kód</th>
+                    <th data-i18n="employee.name">Név</th>
+                    <th data-i18n="employee.department">Részleg</th>
+                    <th data-i18n="employee.status">Állapot</th>
+                    <th data-i18n="employee.lunchBreakShort">Ebédszünet</th>
+                    <th data-i18n="employee.note">Megjegyzés</th>
+                    <th data-i18n="common.actions">Műveletek</th>
+                  </tr>
+                </thead>
+                <tbody id="employeeTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="cardsPage" class="page">
+          <div class="card">
+            <h2 data-i18n="cards.title">Kártyák nyomtatása</h2>
+            <p data-i18n="cards.description">Itt készülnek a dolgozói QR-kártyák.</p>
+
+            <div class="cards-toolbar">
+              <button type="button" id="selectAllCardsButton" class="secondary-btn" data-i18n="cards.selectAll">
+                Összes kijelölése
+              </button>
+
+              <button type="button" id="clearCardSelectionButton" class="secondary-btn" data-i18n="cards.clearSelection">
+                Kijelölés törlése
+              </button>
+
+              <button type="button" id="refreshCardsButton" class="secondary-btn" data-i18n="cards.refresh">
+                Kártyák frissítése
+              </button>
+
+              <button type="button" id="printCardsButton" class="primary-btn" data-i18n="cards.print">
+               Kártyák nyomtatása
+              </button>
+            </div>
+
+            <p class="small-info" data-i18n="cards.onlyActive">
+              Csak az aktív dolgozókhoz készül kártya.
+            </p>
+
+            <div id="cardsPrintArea" class="cards-grid"></div>
+          </div>
+        </section>
+
+        <section id="insidePage" class="page">
+          <div class="card">
+            <h2 data-i18n="inside.title">Bent lévők</h2>
+            <p data-i18n="inside.description">Itt látszik, hogy jelenleg kik vannak bent.</p>
+
+            <div class="toolbar-row">
+              <div id="insideSummary" class="summary-box">Bent lévők: 0</div>
+
+              <button type="button" id="refreshInsideButton" class="secondary-btn" data-i18n="inside.refresh">
+                Frissítés
+              </button>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="employee.code">Dolgozói kód</th>
+                    <th data-i18n="employee.name">Név</th>
+                    <th data-i18n="employee.department">Részleg</th>
+                    <th data-i18n="inside.arrivalTime">Érkezés ideje</th>
+                    <th data-i18n="inside.lastEvent">Utolsó esemény</th>
+                  </tr>
+                </thead>
+                <tbody id="insideTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="attendancePage" class="page">
+          <div class="card">
+            <h2 data-i18n="attendance.title">Jelenléti lista</h2>
+            <p data-i18n="attendance.description">Itt látszik a napi érkezés és távozás lista.</p>
+
+            <div class="toolbar-row attendance-toolbar-row">
+              <div class="attendance-filter-group">
+                <div class="date-filter-box">
+                  <label for="attendanceSearchInput" data-i18n="attendance.search">Keresés</label>
+                  <input
+                    id="attendanceSearchInput"
+                    type="search"
+                    data-i18n-placeholder="attendance.searchPlaceholder"
+                    placeholder="Név, kód vagy részleg"
+                  />
+                </div>
+
+                <div class="date-filter-box">
+                  <label for="attendanceDateInput" data-i18n="attendance.date">Dátum</label>
+              <input id="attendanceDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+                </div>
+
+                <div class="date-filter-box">
+                  <label for="attendanceViewModeInput" data-i18n="attendance.viewMode">Nézet</label>
+                  <select id="attendanceViewModeInput">
+                    <option value="daily" data-i18n="attendance.viewDaily">Napi</option>
+                    <option value="weekly" data-i18n="attendance.viewWeekly">Heti</option>
+                    <option value="monthly" data-i18n="attendance.viewMonthly">Havi</option>
+                  </select>
+                </div>
+
+                <button type="button" id="attendanceTodayButton" class="secondary-btn" data-i18n="attendance.today">
+                  Mai nap
+                </button>
+
+                <div id="attendanceSummary" class="summary-box">0</div>
+              </div>
+
+              <details class="attendance-export-details">
+                <summary data-i18n="attendance.exportPanelTitle">Export / nyomtatás</summary>
+
+                <div class="attendance-export-panel">
+                  <div class="export-button-group">
+                    <span class="export-group-title" data-i18n="attendance.exportGroupDaily">Napi</span>
+
+                    <button type="button" id="printDailyAttendanceButton" class="primary-btn" data-i18n="attendance.printDaily">
+                      Napi PDF / Nyomtatás
+                    </button>
+
+                    <button type="button" id="exportDailyXlsxButton" class="secondary-btn" data-i18n="attendance.exportDailyXlsx">
+                      Napi XLSX export
+                    </button>
+                  </div>
+
+                  <div class="export-button-group">
+                    <span class="export-group-title" data-i18n="attendance.exportGroupWeekly">Heti</span>
+
+                    <button type="button" id="printWeeklyAttendanceButton" class="primary-btn" data-i18n="attendance.printWeekly">
+                      Heti PDF / Nyomtatás
+                    </button>
+
+                    <button type="button" id="exportWeeklyXlsxButton" class="secondary-btn" data-i18n="attendance.exportWeeklyXlsx">
+                      Heti XLSX export
+                    </button>
+                  </div>
+
+                  <div class="export-button-group">
+                    <span class="export-group-title" data-i18n="attendance.exportGroupMonthly">Havi</span>
+
+                    <button type="button" id="printMonthlyAttendanceButton" class="primary-btn" data-i18n="attendance.printMonthly">
+                      Havi PDF / Nyomtatás
+                    </button>
+
+                    <button type="button" id="exportMonthlyXlsxButton" class="secondary-btn" data-i18n="attendance.exportMonthlyXlsx">
+                      Havi XLSX export
+                    </button>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <div id="openDayWarningBox" class="open-day-warning hidden"></div>
+
+            <form id="attendanceEditForm" class="admin-edit-box hidden">
+              <h3 data-i18n="attendance.editBoxTitle">Napi érkezés és távozás javítása</h3>
+
+              <input id="attendanceEditEmployeeIdInput" type="hidden" />
+              <input id="attendanceEditArrivalIdInput" type="hidden" />
+              <input id="attendanceEditDepartureIdInput" type="hidden" />
+              <input id="attendanceEditOriginalDateInput" type="hidden" />
+
+              <div class="admin-edit-grid">
+                <div>
+                  <label data-i18n="attendance.employee">Dolgozó</label>
+                  <strong id="attendanceEditEmployeeName">-</strong>
+                </div>
+
+                <div>
+                  <label for="attendanceEditDateInput" data-i18n="attendance.date">Dátum</label>
+                  <input id="attendanceEditDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+                </div>
+
+                <div class="attendance-events-editor">
+                  <label data-i18n="attendance.eventsToCorrect">Javítandó események</label>
+                  <div id="attendanceEditEventsList" class="attendance-edit-events-list"></div>
+                  <div class="attendance-edit-add-row">
+                    <button type="button" id="attendanceAddArrivalButton" class="secondary-btn" data-i18n="attendance.addArrival">
+                      + Érkezés hozzáadása
+                    </button>
+                    <button type="button" id="attendanceAddDepartureButton" class="secondary-btn" data-i18n="attendance.addDeparture">
+                      + Távozás hozzáadása
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="button-row">
+                <button type="submit" class="primary-btn" data-i18n="attendance.saveCorrection">
+                  Javítás mentése
+                </button>
+
+                <button type="button" id="attendanceEditCancelButton" class="secondary-btn" data-i18n="attendance.cancelCorrection">
+                  Mégse
+                </button>
+              </div>
+            </form>
+
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr id="attendanceTableHeadRow">
+                    <th data-i18n="attendance.time">Ido</th>
+                    <th data-i18n="attendance.eventType">Típus</th>
+                    <th data-i18n="attendance.code">Kód</th>
+                    <th data-i18n="attendance.employee">Dolgozó</th>
+                    <th data-i18n="attendance.department">Részleg</th>
+                    <th data-i18n="attendance.source">Forrás</th>
+                    <th data-i18n="attendance.date">Dátum</th>
+                    <th data-i18n="common.actions">Műveletek</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="summary-section">
+              <h3 id="dailySummaryTitle" data-i18n="attendance.dailySummaryTitle">Napi összesítés dolgozónként</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr id="dailySummaryTableHeadRow">
+                      <th data-i18n="attendance.code">Kód</th>
+                      <th data-i18n="attendance.employee">Dolgozó</th>
+                      <th data-i18n="attendance.department">Részleg</th>
+                      <th data-i18n="attendance.firstArrival">Elso érkezés</th>
+                      <th data-i18n="attendance.lastDeparture">Utolsó távozás</th>
+                      <th data-i18n="attendance.rawWorked">Nyers ido</th>
+                      <th data-i18n="attendance.lunchDeduction">Ebédszünet</th>
+                      <th data-i18n="attendance.netWorked">Ledolgozott ido</th>
+                      <th data-i18n="attendance.overtime">Túlóra</th>
+                      <th data-i18n="attendance.missing">Hiány</th>
+                      <th data-i18n="attendance.balance">Eltérés</th>
+                      <th data-i18n="attendance.dayStatus">Állapot</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dailySummaryTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="profilePage" class="page">
+          <div class="card">
+            <h2 data-i18n="profile.title">Dolgozói adatlap</h2>
+            <p data-i18n="profile.description">Személyenkénti havi jelenléti összesítő.</p>
+
+            <div class="toolbar-row profile-toolbar-row">
+              <div class="profile-filter-group">
+                <div class="date-filter-box profile-search-box">
+                  <label for="profileEmployeeSearchInput" data-i18n="profile.search">Dolgozó keresése</label>
+                  <input
+                    id="profileEmployeeSearchInput"
+                    type="text"
+                    data-i18n-placeholder="profile.searchPlaceholder"
+                    placeholder="Név, kód vagy részleg"
+                  />
+                </div>
+
+                <div class="date-filter-box">
+                  <label for="profileEmployeeSelect" data-i18n="profile.employee">Dolgozó</label>
+                  <select id="profileEmployeeSelect"></select>
+                </div>
+
+                <div class="date-filter-box">
+                  <label for="profileMonthInput" data-i18n="profile.month">Hónap</label>
+                  <input id="profileMonthInput" type="month" />
+                </div>
+              </div>
+
+              <div class="profile-action-group">
+                <button type="button" id="profileRefreshButton" class="secondary-btn" data-i18n="profile.refresh">
+                  Frissítés
+                </button>
+
+                <button type="button" id="profilePrintPdfButton" class="primary-btn" data-i18n="profile.printPdf">
+                  Személy PDF / Nyomtatás
+                </button>
+
+                <button type="button" id="profileExportXlsxButton" class="secondary-btn" data-i18n="profile.exportXlsx">
+                  Személy XLSX export
+                </button>
+              </div>
+            </div>
+
+            <h3 id="profileSelectedTitle" class="profile-selected-title">-</h3>
+
+            <div id="profileSummaryCards" class="profile-summary-cards"></div>
+
+            <div class="summary-section">
+              <h3 data-i18n="profile.dailyRowsTitle">Napi bontás</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.date">Dátum</th>
+                      <th data-i18n="attendance.firstArrival">Elso érkezés</th>
+                      <th data-i18n="attendance.lastDeparture">Utolsó távozás</th>
+                      <th data-i18n="attendance.rawWorked">Nyers ido</th>
+                      <th data-i18n="attendance.lunchDeduction">Ebédszünet</th>
+                      <th data-i18n="attendance.netWorked">Ledolgozott ido</th>
+                      <th data-i18n="attendance.overtime">Túlóra</th>
+                      <th data-i18n="attendance.missing">Hiány</th>
+                      <th data-i18n="attendance.balance">Eltérés</th>
+                      <th data-i18n="attendance.dayStatus">Állapot</th>
+                    </tr>
+                  </thead>
+                  <tbody id="profileDailySummaryTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="profile.eventRowsTitle">Napi ki-be mozgások</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table profile-events-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.date">Dátum</th>
+                      <th data-i18n="profile.eventNumber">Sorszám</th>
+                      <th data-i18n="attendance.time">Ido</th>
+                      <th data-i18n="attendance.eventType">Típus</th>
+                      <th data-i18n="attendance.source">Forrás</th>
+                    </tr>
+                  </thead>
+                  <tbody id="profileEventRowsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="monthlyAccountingPage" class="page">
+          <div class="card">
+            <h2 data-i18n="monthly.title">Havi elszámolás</h2>
+            <p data-i18n="monthly.description">100+ dolgozó havi áttekintése ledolgozott idővel, túlórával, kajapénzzel és távollétekkel.</p>
+
+            <div class="toolbar-row monthly-toolbar-row">
+              <div class="date-filter-box">
+                <label for="monthlyAccountingMonthInput" data-i18n="profile.month">Hónap</label>
+                <input id="monthlyAccountingMonthInput" type="month" />
+              </div>
+
+              <div class="date-filter-box">
+                <label for="monthlyAccountingSearchInput" data-i18n="attendance.search">Keresés</label>
+                <input
+                  id="monthlyAccountingSearchInput"
+                  type="search"
+                  data-i18n-placeholder="attendance.searchPlaceholder"
+                  placeholder="Név, kód vagy részleg"
+                />
+              </div>
+
+              <button type="button" id="monthlyAccountingRefreshButton" class="secondary-btn" data-i18n="statistics.refresh">
+                Frissítés
+              </button>
+            </div>
+
+            <div id="monthlyAccountingCards" class="statistics-cards"></div>
+
+            <div class="summary-section">
+              <h3 data-i18n="monthly.absenceFormTitle">Távollét rögzítése</h3>
+
+              <form id="absenceForm" class="admin-edit-box monthly-absence-form">
+                <div class="admin-edit-grid">
+                  <div>
+                    <label for="absenceEmployeeSelect" data-i18n="profile.employee">Dolgozó</label>
+                    <select id="absenceEmployeeSelect"></select>
+                  </div>
+
+                  <div>
+                    <label for="absenceStartDateInput" data-i18n="absence.startDate">Kezdo dátum</label>
+                    <input id="absenceStartDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+                  </div>
+
+                  <div>
+                    <label for="absenceEndDateInput" data-i18n="absence.endDate">Záró dátum</label>
+                    <input id="absenceEndDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+                  </div>
+
+                  <div>
+                    <label for="absenceTypeInput" data-i18n="absence.type">Típus</label>
+                    <select id="absenceTypeInput">
+                      <option value="sick" data-i18n="absence.sick">Betegség</option>
+                      <option value="vacation" data-i18n="absence.vacation">Szabadság</option>
+                      <option value="excused" data-i18n="absence.excused">Igazolt hiányzás</option>
+                      <option value="unexcused" data-i18n="absence.unexcused">Igazolatlan hiányzás</option>
+                      <option value="unpaid" data-i18n="absence.unpaid">Fizetés nélküli</option>
+                      <option value="other" data-i18n="absence.other">Egyéb</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="absenceNoteInput" data-i18n="employee.note">Megjegyzés</label>
+                    <input id="absenceNoteInput" type="text" data-i18n-placeholder="employee.notePlaceholder" placeholder="Megjegyzés" />
+                  </div>
+                </div>
+
+                <div class="button-row">
+                  <button type="submit" class="primary-btn" data-i18n="absence.save">Távollét mentése</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="calendar.title">Céges munkanaptár</h3>
+
+              <form id="companyDayForm" class="admin-edit-box monthly-absence-form">
+                <div class="admin-edit-grid">
+                  <div>
+                    <label for="companyDayStartDateInput" data-i18n="absence.startDate">Kezdo dátum</label>
+                    <input id="companyDayStartDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+                  </div>
+
+                  <div>
+                    <label for="companyDayEndDateInput" data-i18n="absence.endDate">Záró dátum</label>
+                    <input id="companyDayEndDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+                  </div>
+
+                  <div>
+                    <label for="companyDayTypeInput" data-i18n="calendar.dayType">Nap típusa</label>
+                    <select id="companyDayTypeInput">
+                      <option value="day_off" data-i18n="calendar.dayOff">Szabadnap</option>
+                      <option value="vacation" data-i18n="calendar.vacation">Szabadság</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="companyDayNoteInput" data-i18n="employee.note">Megjegyzés</label>
+                    <input id="companyDayNoteInput" type="text" data-i18n-placeholder="employee.notePlaceholder" placeholder="Megjegyzés" />
+                  </div>
+                </div>
+
+                <div class="button-row">
+                  <button type="submit" class="primary-btn" data-i18n="calendar.save">Nap mentése</button>
+                </div>
+              </form>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="absence.startDate">Kezdo dátum</th>
+                      <th data-i18n="absence.endDate">Záró dátum</th>
+                      <th data-i18n="calendar.dayType">Nap típusa</th>
+                      <th data-i18n="employee.note">Megjegyzés</th>
+                      <th data-i18n="common.actions">Műveletek</th>
+                    </tr>
+                  </thead>
+                  <tbody id="companyDaysTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="monthly.summaryTitle">Havi fo áttekintés</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table monthly-accounting-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.code">Kód</th>
+                      <th data-i18n="attendance.employee">Dolgozó</th>
+                      <th data-i18n="attendance.department">Részleg</th>
+                      <th data-i18n="attendance.workDays">Jelenléti napok</th>
+                      <th data-i18n="attendance.netWorked">Ledolgozott ido</th>
+                      <th data-i18n="attendance.overtime">Túlóra</th>
+                      <th data-i18n="payment.overtimeValue">Túlórapénz</th>
+                      <th data-i18n="payment.mealVoucherDays">Kajabon napok</th>
+                      <th data-i18n="payment.mealVoucherValue">Kajapénz</th>
+                      <th data-i18n="absence.totalDays">Távollét</th>
+                      <th data-i18n="attendance.openDays">Nyitott napok</th>
+                      <th data-i18n="common.actions">Műveletek</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monthlyAccountingTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="monthly.detailTitle">Dolgozó havi részletei</h3>
+              <div id="monthlyAccountingDetailTitle" class="profile-selected-title">-</div>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.date">Dátum</th>
+                      <th data-i18n="attendance.firstArrival">Elso érkezés</th>
+                      <th data-i18n="attendance.lastDeparture">Utolsó távozás</th>
+                      <th data-i18n="attendance.netWorked">Ledolgozott ido</th>
+                      <th data-i18n="attendance.overtime">Túlóra</th>
+                      <th data-i18n="attendance.missing">Hiány</th>
+                      <th data-i18n="absence.type">Távollét</th>
+                      <th data-i18n="attendance.dayStatus">Állapot</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monthlyAccountingDetailTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="monthly.absenceListTitle">Havi távollétek</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.employee">Dolgozó</th>
+                      <th data-i18n="attendance.department">Részleg</th>
+                      <th data-i18n="absence.startDate">Kezdo dátum</th>
+                      <th data-i18n="absence.endDate">Záró dátum</th>
+                      <th data-i18n="absence.type">Típus</th>
+                      <th data-i18n="employee.note">Megjegyzés</th>
+                      <th data-i18n="common.actions">Műveletek</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monthlyAbsenceTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="vacationTrackerPage" class="page">
+          <div class="card">
+            <h2 data-i18n="vacation.title">Szabadságkövető</h2>
+            <p data-i18n="vacation.description">Éves szabadságkeretek, kivett és lefoglalt napok követése.</p>
+
+            <div class="toolbar-row monthly-toolbar-row">
+              <div class="date-filter-box">
+                <label for="vacationYearInput" data-i18n="vacation.year">Év</label>
+                <input id="vacationYearInput" type="number" min="2000" max="2100" step="1" />
+              </div>
+
+              <div class="date-filter-box">
+                <label for="vacationSearchInput" data-i18n="attendance.search">Keresés</label>
+                <input id="vacationSearchInput" type="search" data-i18n-placeholder="attendance.searchPlaceholder" placeholder="Név, kód vagy részleg" />
+              </div>
+
+              <div class="date-filter-box">
+                <label for="vacationDepartmentSelect" data-i18n="attendance.department">Részleg</label>
+                <select id="vacationDepartmentSelect"></select>
+              </div>
+
+              <button type="button" id="vacationRefreshButton" class="secondary-btn" data-i18n="statistics.refresh">Frissítés</button>
+            </div>
+
+            <div id="vacationSummaryCards" class="statistics-cards"></div>
+
+            <div class="summary-section">
+              <h3 data-i18n="vacation.allowanceTitle">Éves szabadságkeret beállítása</h3>
+
+              <form id="vacationAllowanceForm" class="admin-edit-box monthly-absence-form">
+                <div class="admin-edit-grid">
+                  <div>
+                    <label for="vacationEmployeeSelect" data-i18n="profile.employee">Dolgozó</label>
+                    <select id="vacationEmployeeSelect"></select>
+                  </div>
+
+                  <div>
+                    <label for="vacationEntitledDaysInput" data-i18n="vacation.entitled">Éves keret</label>
+                    <input id="vacationEntitledDaysInput" type="number" min="0" max="366" step="0.5" value="0" />
+                  </div>
+
+                  <div>
+                    <label for="vacationCarriedDaysInput" data-i18n="vacation.carried">Áthozott napok</label>
+                    <input id="vacationCarriedDaysInput" type="number" min="0" max="366" step="0.5" value="0" />
+                  </div>
+                </div>
+
+                <div class="button-row">
+                  <button type="submit" class="primary-btn" data-i18n="vacation.saveAllowance">Keret mentése</button>
+                </div>
+                <div id="vacationStatus" class="status-message" data-i18n="vacation.statusReady">A szabadságköveto készen áll.</div>
+              </form>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="vacation.overviewTitle">Dolgozói szabadságkeretek</h3>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.code">Kód</th>
+                      <th data-i18n="attendance.employee">Dolgozó</th>
+                      <th data-i18n="attendance.department">Részleg</th>
+                      <th data-i18n="vacation.entitled">Éves keret</th>
+                      <th data-i18n="vacation.carried">Áthozott</th>
+                      <th data-i18n="vacation.available">Összesen</th>
+                      <th data-i18n="vacation.used">Kivett</th>
+                      <th data-i18n="vacation.booked">Lefoglalt</th>
+                      <th data-i18n="vacation.remaining">Maradt</th>
+                      <th data-i18n="vacation.nextDate">Következő szabadság</th>
+                      <th data-i18n="common.actions">Műveletek</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vacationTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="vacation.detailsTitle">Szabadságok részletei</h3>
+              <div id="vacationDetailTitle" class="profile-selected-title">-</div>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="absence.startDate">Kezdo dátum</th>
+                      <th data-i18n="absence.endDate">Záró dátum</th>
+                      <th data-i18n="vacation.workdays">Elszámolt munkanapok</th>
+                      <th data-i18n="vacation.periodStatus">Állapot</th>
+                      <th data-i18n="employee.note">Megjegyzés</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vacationDetailTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="statisticsPage" class="page">
+          <div class="card">
+            <h2 data-i18n="statistics.title">Vezetői áttekintés</h2>
+            <p data-i18n="statistics.description">Napi állapotok és ellenorzést igénylo bejegyzések.</p>
+
+            <div class="toolbar-row">
+              <div class="date-filter-box">
+                <label for="statisticsDateInput" data-i18n="statistics.date">Dátum</label>
+                <input id="statisticsDateInput" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" />
+              </div>
+
+              <button type="button" id="statisticsTodayButton" class="secondary-btn" data-i18n="statistics.today">
+                Mai nap
+              </button>
+
+              <button type="button" id="statisticsRefreshButton" class="secondary-btn" data-i18n="statistics.refresh">
+                Frissítés
+              </button>
+            </div>
+
+            <div id="statisticsCards" class="statistics-cards"></div>
+
+            <div class="summary-section">
+              <h3 data-i18n="statistics.attentionTitle">Figyelmet igényel</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.code">Kód</th>
+                      <th data-i18n="attendance.employee">Dolgozó</th>
+                      <th data-i18n="attendance.department">Részleg</th>
+                      <th data-i18n="attendance.dayStatus">Állapot</th>
+                      <th data-i18n="statistics.issue">Ellenorizendo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="statisticsAttentionTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3 data-i18n="statistics.dailyTableTitle">Aktív dolgozók napi állapota</h3>
+
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="attendance.code">Kód</th>
+                      <th data-i18n="attendance.employee">Dolgozó</th>
+                      <th data-i18n="attendance.department">Részleg</th>
+                      <th data-i18n="attendance.firstArrival">Elso érkezés</th>
+                      <th data-i18n="attendance.lastDeparture">Utolsó távozás</th>
+                      <th data-i18n="attendance.netWorked">Ledolgozott ido</th>
+                      <th data-i18n="attendance.dayStatus">Állapot</th>
+                    </tr>
+                  </thead>
+                  <tbody id="statisticsDailyTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="manager-overview-grid">
+              <div class="summary-section">
+                <h3 data-i18n="statistics.upcomingAbsences">Aktuális és közelgo távollétek</h3>
+                <div class="table-wrapper">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th data-i18n="attendance.employee">Dolgozó</th>
+                        <th data-i18n="absence.startDate">Kezdo dátum</th>
+                        <th data-i18n="absence.endDate">Záró dátum</th>
+                        <th data-i18n="absence.type">Típus</th>
+                      </tr>
+                    </thead>
+                    <tbody id="statisticsUpcomingAbsenceBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="summary-section">
+                <h3 data-i18n="statistics.monthlyLeaders">Havi kiemelt eltérések</h3>
+                <div id="statisticsMonthlyLeaders" class="manager-ranking-grid"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="exportPage" class="page">
+          <div class="card">
+            <h2 data-i18n="export.title">Export / Import</h2>
+            <p data-i18n="export.description">JSON biztonsági mentés és visszatöltés localStorage adatokhoz.</p>
+
+            <div id="exportSummaryCards" class="export-summary-cards"></div>
+
+            <div class="export-box">
+              <h3 data-i18n="export.jsonTitle">JSON mentés / visszatöltés</h3>
+
+              <p data-i18n="export.jsonDescription">
+                A JSON mentés tartalmazza a beállításokat, dolgozókat és jelenléti eseményeket.
+              </p>
+
+              <p class="warning-text" data-i18n="export.importWarning">
+                Figyelem: visszatöltéskor a jelenlegi adatok felülíródnak.
+              </p>
+
+              <div class="button-row">
+                <button type="button" id="exportJsonButton" class="primary-btn" data-i18n="export.downloadJson">
+                  JSON mentés letöltése
+                </button>
+
+                <button type="button" id="importJsonButton" class="secondary-btn" data-i18n="export.importJson">
+                  JSON visszatöltése
+                </button>
+
+                <button type="button" id="restoreAutoBackupButton" class="secondary-btn" data-i18n="backup.restoreAutoBackup">
+                  Automatikus mentés visszaállítása
+                </button>
+
+                <input id="importJsonFileInput" type="file" accept="application/json,.json" class="hidden" />
+              </div>
+
+              <p id="exportStatus" class="export-status" data-i18n="export.statusReady">
+                Export / Import készen áll.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="settingsPage" class="page">
+          <div class="card">
+            <h2 data-i18n="settings.title">Beállítások</h2>
+
+            <form id="settingsForm">
+            <div class="settings-grid">
+              <div>
+                <label data-i18n="settings.companyName">Cég neve</label>
+                <input id="companyNameInput" type="text" value="Centru de sticla" />
+              </div>
+
+              <div>
+                <label data-i18n="settings.dailyNorm">Napi norma</label>
+                <input id="dailyNormInput" type="text" value="08:00" placeholder="08:00" />
+              </div>
+
+              <div>
+                <label data-i18n="settings.lunchBreak">Ebédszünet</label>
+                <input id="lunchBreakInput" type="text" value="00:30" placeholder="00:30" />
+              </div>
+
+              <div class="overtime-data">
+                <label data-i18n="settings.overtimeHourlyRate">Túlóra óradíj (lej/óra)</label>
+                <input
+                  id="overtimeHourlyRateInput"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label class="checkbox-row">
+                  <input id="showOvertimeDataInput" type="checkbox" checked />
+                  <span data-i18n="settings.showOvertimeData">Túlóra és túlórapénz megjelenítése</span>
+                </label>
+              </div>
+
+              <div>
+                <label data-i18n="settings.mealVoucherDailyValue">Kajabon érték (lej/nap)</label>
+                <input
+                  id="mealVoucherDailyValueInput"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label data-i18n="settings.storageMode">Mentési mód</label>
+                <input id="storageModeInput" type="text" value="supabase" disabled />
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button type="submit" class="primary-btn" data-i18n="settings.save">
+                Beállítások mentése
+              </button>
+
+              <button type="button" id="settingsResetButton" class="secondary-btn" data-i18n="settings.reset">
+                Alapértékek visszaállítása
+              </button>
+            </div>
+
+            <p id="settingsStatus" class="export-status" data-i18n="settings.statusReady">
+              Beállítások készen állnak.
+            </p>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="lucide.min.js?v=1242"></script>
+  <script src="flatpickr.min.js?v=1242"></script>
+  <script src="flatpickr-hu.js?v=1242"></script>
+  <script src="flatpickr-ro.js?v=1242"></script>
+  <script src="supabase-config.js?v=1242"></script>
+  <script src="language.js?v=1242"></script>
+  <script src="storage.js?v=1242"></script>
+  <script src="scanner.js?v=1242"></script>
+  <script src="export.js?v=1242"></script>
+  <script src="app.js?v=1242"></script>
+</body>
+</html>
+
+
+
+

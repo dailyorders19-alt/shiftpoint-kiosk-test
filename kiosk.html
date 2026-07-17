@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftPoint Kiosk</title>
+  <link rel="manifest" href="kiosk-manifest.json?v=1243" />
+  <link rel="icon" href="icon-192.svg?v=1243" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg?v=1243" />
+  <link rel="stylesheet" href="style.css?v=1243" />
+  <meta name="theme-color" content="#111827" />
+</head>
+<body class="scan-only-app kiosk-app">
+  <div class="kiosk-shell">
+    <header class="kiosk-header">
+      <div>
+        <h1>ShiftPoint</h1>
+        <p data-i18n="kiosk.subtitle">Jelenléti kiosk</p>
+      </div>
+      <div id="kioskClock" class="kiosk-clock">--:--</div>
+    </header>
+
+    <main class="kiosk-main">
+      <section id="scanPage" class="page active">
+        <div class="kiosk-card">
+          <div id="scanActivePanel" class="kiosk-reader">
+            <h2 id="scanActionTitle" data-i18n="kiosk.readyTitle">Olvasásra kész</h2>
+            <p id="scannerStatus" class="scanner-status scanner-status-info" data-i18n="kiosk.readyText">
+              Tartsa a QR kódot az olvasó elé.
+            </p>
+
+            <div id="scannerCameraBox" class="scanner-camera-box kiosk-camera-box">
+              <video id="scannerVideo" class="scanner-video" autoplay muted playsinline></video>
+              <div class="scanner-frame"></div>
+            </div>
+
+            <input id="kioskScannerInput" class="kiosk-scanner-input" type="text" autocomplete="off" inputmode="none" aria-label="QR scanner input" />
+
+            <div class="kiosk-actions">
+              <button type="button" id="startScannerButton" class="secondary-btn" data-i18n="scan.startCamera">
+                Kamera indítása
+              </button>
+              <button type="button" id="stopScannerButton" class="secondary-btn" data-i18n="scan.stopCamera" disabled>
+                Kamera leállítása
+              </button>
+              <button type="button" id="switchCameraButton" class="secondary-btn" data-i18n="scan.switchToBackCamera">
+                Hátsó kamera használata
+              </button>
+            </div>
+          </div>
+
+          <div id="scannerResult" class="scan-result hidden"></div>
+
+          <div id="scanConfirmationPanel" class="scan-kiosk-confirmation hidden">
+            <strong id="scanConfirmationTitle"></strong>
+            <span id="scanConfirmationName"></span>
+            <span id="scanConfirmationTime"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=1243"></script>
+  <script src="language.js?v=1243"></script>
+  <script src="storage.js?v=1243"></script>
+  <script src="scanner.js?v=1243"></script>
+  <script src="export.js?v=1243"></script>
+  <script src="app.js?v=1243"></script>
+</body>
+</html>
