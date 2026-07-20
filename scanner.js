@@ -8,6 +8,10 @@ let scannerResetTimer = null;
 let scannerProcessing = false;
 let scannerFacingMode = "environment";
 let kioskInputTimer = null;
+let scannerSessionTimer = null;
+let scannerAudioContext = null;
+
+const SCANNER_SESSION_TIMEOUT_MS = 30000;
 
 function isDedicatedScannerMode() {
   return document.body.classList.contains("scan-only-app");
@@ -57,6 +61,7 @@ function startDedicatedScanner(type) {
   scannerProcessing = false;
   scannerLastCode = "";
   scannerLastCodeAt = 0;
+  prepareScannerFeedbackAudio();
 
   const actionPanel = document.getElementById("scanActionPanel");
   const activePanel = document.getElementById("scanActivePanel");
@@ -76,6 +81,7 @@ function startDedicatedScanner(type) {
   }
 
   startCameraScanner();
+  startDedicatedScannerTimeout();
 }
 
 function resetDedicatedScanner() {
@@ -107,6 +113,84 @@ function resetDedicatedScanner() {
   if (actionPanel) actionPanel.classList.remove("hidden");
   if (activePanel) activePanel.classList.add("hidden");
   if (confirmationPanel) confirmationPanel.className = "scan-kiosk-confirmation hidden";
+}
+
+function startDedicatedScannerTimeout() {
+  clearDedicatedScannerTimeout();
+
+  scannerSessionTimer = setTimeout(() => {
+    stopCameraScanner(false);
+    scannerProcessing = true;
+    playScannerFeedbackSound("error");
+    showScannerMessage(t("scan.cameraTimeout"), "warning");
+
+    scannerResetTimer = setTimeout(() => {
+      resetDedicatedScanner();
+    }, 2000);
+  }, SCANNER_SESSION_TIMEOUT_MS);
+}
+
+function clearDedicatedScannerTimeout() {
+  if (scannerSessionTimer) {
+    clearTimeout(scannerSessionTimer);
+    scannerSessionTimer = null;
+  }
+}
+
+function prepareScannerFeedbackAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  if (!scannerAudioContext) {
+    scannerAudioContext = new AudioContextClass();
+  }
+
+  if (scannerAudioContext.state === "suspended") {
+    scannerAudioContext.resume().catch(() => {});
+  }
+
+  return scannerAudioContext;
+}
+
+function playScannerFeedbackSound(type) {
+  const audioContext = prepareScannerFeedbackAudio();
+
+  if (!audioContext) {
+    return;
+  }
+
+  const playTone = () => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const startAt = audioContext.currentTime;
+    const isError = type === "error";
+    const startFrequency = isError ? 190 : type === "out" ? 880 : 620;
+    const endFrequency = isError ? 130 : type === "out" ? 620 : 880;
+    const duration = isError ? 0.32 : 0.22;
+
+    oscillator.type = isError ? "square" : "sine";
+    oscillator.frequency.setValueAtTime(startFrequency, startAt);
+    oscillator.frequency.linearRampToValueAtTime(endFrequency, startAt + duration);
+
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(0.08, startAt + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + duration);
+  };
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume().then(playTone).catch(() => {});
+    return;
+  }
+
+  playTone();
 }
 
 async function startCameraScanner() {
@@ -159,6 +243,8 @@ async function startCameraScanner() {
 function stopCameraScanner(showMessage = true) {
   const video = document.getElementById("scannerVideo");
   const cameraBox = document.getElementById("scannerCameraBox");
+
+  clearDedicatedScannerTimeout();
 
   if (scannerLoopTimer) {
     clearTimeout(scannerLoopTimer);
@@ -248,6 +334,10 @@ function handleScannedCode(code, source = "camera") {
   }
 
   if (!employee) {
+    if (dedicatedMode && !autoKioskMode) {
+      playScannerFeedbackSound("error");
+    }
+
     resultBox.className = "scan-result scan-result-error";
     resultBox.innerHTML = `
       <strong>${escapeHtml(t("scan.unknownCode"))}</strong>
@@ -258,6 +348,10 @@ function handleScannedCode(code, source = "camera") {
   }
 
   if (!employee.active) {
+    if (dedicatedMode && !autoKioskMode) {
+      playScannerFeedbackSound("error");
+    }
+
     resultBox.className = "scan-result scan-result-warning";
     resultBox.innerHTML = `
       <strong>${escapeHtml(employee.name)}</strong>
@@ -276,10 +370,12 @@ function handleScannedCode(code, source = "camera") {
 
       if (expectedType !== scannerRequestedType) {
         stopCameraScanner(false);
+        playScannerFeedbackSound("error");
         showDedicatedScanConfirmation(
           employee,
-          scannerRequestedType === "in" ? t("scan.alreadyCheckedIn") : t("scan.alreadyCheckedOut"),
-          "warning"
+          t("scan.operationFailed"),
+          "warning",
+          scannerRequestedType === "in" ? t("scan.alreadyCheckedIn") : t("scan.alreadyCheckedOut")
         );
         scheduleDedicatedScannerReset();
         return;
@@ -328,6 +424,7 @@ function handleScannedCode(code, source = "camera") {
   }
 
   if (dedicatedMode && savedEvent) {
+    playScannerFeedbackSound(savedEvent.type);
     showDedicatedScanConfirmation(
       employee,
       savedEvent.type === "in" ? t("scan.checkedIn") : t("scan.checkedOut"),
