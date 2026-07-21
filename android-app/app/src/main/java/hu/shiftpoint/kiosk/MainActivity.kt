@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -13,6 +14,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import android.text.InputType
 import android.util.Log
 import android.view.Gravity
@@ -342,7 +344,9 @@ class MainActivity : Activity() {
         val adminActions = arrayOf(
             getString(R.string.admin_action_language),
             getString(R.string.admin_action_unlock),
-            getString(R.string.admin_action_lock)
+            getString(R.string.admin_action_lock),
+            getString(R.string.admin_action_home_settings),
+            getString(R.string.admin_action_android_settings)
         )
 
         AlertDialog.Builder(this)
@@ -353,6 +357,8 @@ class MainActivity : Activity() {
                     0 -> showAdminLanguageDialog()
                     1 -> stopScreenPinning()
                     2 -> startScreenPinning()
+                    3 -> openAndroidSettings(Settings.ACTION_HOME_SETTINGS)
+                    4 -> openAndroidSettings(Settings.ACTION_SETTINGS)
                 }
             }
             .setNegativeButton(R.string.admin_cancel, null)
@@ -417,6 +423,25 @@ class MainActivity : Activity() {
         } catch (error: RuntimeException) {
             Log.w(TAG, "Screen pinning could not be stopped", error)
             Toast.makeText(this, R.string.screen_pinning_stop_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun openAndroidSettings(action: String) {
+        if (isScreenPinned()) {
+            try {
+                stopLockTask()
+            } catch (error: RuntimeException) {
+                Log.w(TAG, "Screen pinning could not be stopped before settings", error)
+                Toast.makeText(this, R.string.screen_pinning_stop_failed, Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        try {
+            startActivity(Intent(action))
+        } catch (error: RuntimeException) {
+            Log.w(TAG, "Android settings could not be opened", error)
+            Toast.makeText(this, R.string.android_settings_unavailable, Toast.LENGTH_LONG).show()
         }
     }
 

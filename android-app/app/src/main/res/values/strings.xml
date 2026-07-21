@@ -19,9 +19,12 @@
     <string name="admin_action_language">Nyelv beállítása</string>
     <string name="admin_action_unlock">Lezárás feloldása</string>
     <string name="admin_action_lock">Lezárás bekapcsolása</string>
+    <string name="admin_action_home_settings">Kezdőképernyő beállítása</string>
+    <string name="admin_action_android_settings">Android-beállítások megnyitása</string>
     <string name="screen_pinning_unavailable">A képernyőrögzítés nem indítható. Ellenőrizd a tablet biztonsági beállításait.</string>
     <string name="screen_pinning_already_locked">A tesztlezárás már be van kapcsolva</string>
     <string name="screen_pinning_stopped">A tesztlezárás feloldva</string>
     <string name="screen_pinning_already_unlocked">A tesztlezárás már fel van oldva</string>
     <string name="screen_pinning_stop_failed">A tesztlezárás nem oldható fel</string>
+    <string name="android_settings_unavailable">Az Android-beállítások nem nyithatók meg ezen a készüléken</string>
 </resources>
