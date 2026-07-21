@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ShiftPoint Kiosk</string>
+    <string name="pwa_url" translatable="false">https://dailyorders19-alt.github.io/shiftpoint-kiosk-test/scan.html</string>
+    <string name="network_error_title">Nincs hálózati kapcsolat</string>
+    <string name="network_error_retrying">Újracsatlakozás folyamatban</string>
+    <string name="admin_unlock_detected">Adminfeloldás érzékelve</string>
+</resources>
