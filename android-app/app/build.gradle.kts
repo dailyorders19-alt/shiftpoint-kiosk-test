@@ -10,8 +10,8 @@ android {
         applicationId = "hu.shiftpoint.kiosk"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.3.3-diagnostic"
+        versionCode = 7
+        versionName = "0.4.0-diagnostic"
     }
 
     buildTypes {

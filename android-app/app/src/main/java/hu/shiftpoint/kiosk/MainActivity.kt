@@ -2,6 +2,7 @@ package hu.shiftpoint.kiosk
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -11,6 +12,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.text.InputType
 import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
@@ -28,6 +30,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -296,7 +299,59 @@ class MainActivity : Activity() {
         adminCornerTapCount = 0
         firstAdminCornerTapAt = 0L
         hotspot.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        Toast.makeText(this, R.string.admin_unlock_detected, Toast.LENGTH_SHORT).show()
+        showAdminPinDialog()
+    }
+
+    private fun showAdminPinDialog() {
+        val pinInput = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = getString(R.string.admin_pin_hint)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.admin_pin_title)
+            .setView(pinInput)
+            .setNegativeButton(R.string.admin_cancel, null)
+            .setPositiveButton(R.string.admin_continue, null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (pinInput.text.toString() != ADMIN_PIN) {
+                    pinInput.error = getString(R.string.admin_pin_invalid)
+                    return@setOnClickListener
+                }
+
+                dialog.dismiss()
+                showAdminLanguageDialog()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showAdminLanguageDialog() {
+        val languageLabels = arrayOf(
+            getString(R.string.admin_language_hu),
+            getString(R.string.admin_language_ro),
+            getString(R.string.admin_language_en)
+        )
+        val languageCodes = arrayOf("hu", "ro", "en")
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.admin_language_title)
+            .setItems(languageLabels) { dialog, which ->
+                setKioskLanguage(languageCodes[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.admin_cancel, null)
+            .show()
+    }
+
+    private fun setKioskLanguage(language: String) {
+        webView.evaluateJavascript(
+            "document.querySelector('.language-btn[data-lang=\"$language\"]')?.click();",
+            null
+        )
+        Toast.makeText(this, R.string.admin_language_saved, Toast.LENGTH_SHORT).show()
     }
 
     private fun applyKioskTouchRestrictions() {
@@ -326,8 +381,7 @@ class MainActivity : Activity() {
                   }
                   #scanCheckInButton,
                   #scanCheckOutButton,
-                  #scanCancelButton,
-                  .language-btn {
+                  #scanCancelButton {
                     pointer-events: auto !important;
                     touch-action: manipulation !important;
                   }
@@ -428,6 +482,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val TAG = "ShiftPointKiosk"
+        private const val ADMIN_PIN = "2026"
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
         private const val NETWORK_RETRY_DELAY_MS = 10_000L
         private const val ADMIN_REQUIRED_TAPS = 5

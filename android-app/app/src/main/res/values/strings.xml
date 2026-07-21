@@ -6,4 +6,14 @@
     <string name="network_error_retrying">Újracsatlakozás folyamatban</string>
     <string name="admin_unlock_detected">Adminfeloldás érzékelve</string>
     <string name="startup_error_details">Indítási hiba\n\nTípus: %1$s\n\nRészletek:\n%2$s</string>
+    <string name="admin_pin_title">Adminbeállítások</string>
+    <string name="admin_pin_hint">PIN-kód</string>
+    <string name="admin_pin_invalid">Hibás PIN-kód</string>
+    <string name="admin_cancel">Mégse</string>
+    <string name="admin_continue">Tovább</string>
+    <string name="admin_language_title">Kiosk nyelve</string>
+    <string name="admin_language_hu">Magyar (HU)</string>
+    <string name="admin_language_ro">Română (RO)</string>
+    <string name="admin_language_en">English (EN)</string>
+    <string name="admin_language_saved">A kiosk nyelve elmentve</string>
 </resources>
