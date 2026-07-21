@@ -5,4 +5,5 @@
     <string name="network_error_title">Nincs hálózati kapcsolat</string>
     <string name="network_error_retrying">Újracsatlakozás folyamatban</string>
     <string name="admin_unlock_detected">Adminfeloldás érzékelve</string>
+    <string name="startup_error_details">Indítási hiba\n\nTípus: %1$s\n\nRészletek:\n%2$s</string>
 </resources>

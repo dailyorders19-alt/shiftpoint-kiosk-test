@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -48,8 +49,16 @@ class MainActivity : Activity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        try {
+            super.onCreate(savedInstanceState)
+            startKiosk()
+        } catch (error: Throwable) {
+            Log.e(TAG, "Kiosk startup failed", error)
+            showStartupError(error)
+        }
+    }
 
+    private fun startKiosk() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemBars()
 
@@ -92,6 +101,21 @@ class MainActivity : Activity() {
         webView.loadUrl(pwaUrl)
     }
 
+    private fun showStartupError(error: Throwable) {
+        val details = error.stackTraceToString()
+            .lineSequence()
+            .take(12)
+            .joinToString("\n")
+
+        setContentView(TextView(this).apply {
+            setBackgroundColor(Color.rgb(127, 29, 29))
+            setTextColor(Color.WHITE)
+            textSize = 16f
+            setPadding(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24))
+            text = getString(R.string.startup_error_details, error.javaClass.name, details)
+        })
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
 
@@ -125,11 +149,13 @@ class MainActivity : Activity() {
         retryHandler.removeCallbacks(retryRunnable)
         pendingCameraRequest?.deny()
         pendingCameraRequest = null
-        webView.stopLoading()
-        webView.loadUrl("about:blank")
-        webView.clearHistory()
-        webView.removeAllViews()
-        webView.destroy()
+        if (::webView.isInitialized) {
+            webView.stopLoading()
+            webView.loadUrl("about:blank")
+            webView.clearHistory()
+            webView.removeAllViews()
+            webView.destroy()
+        }
         super.onDestroy()
     }
 
@@ -400,6 +426,7 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        private const val TAG = "ShiftPointKiosk"
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
         private const val NETWORK_RETRY_DELAY_MS = 10_000L
         private const val ADMIN_REQUIRED_TAPS = 5
