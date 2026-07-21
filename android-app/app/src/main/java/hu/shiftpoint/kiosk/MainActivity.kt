@@ -326,7 +326,8 @@ class MainActivity : Activity() {
                   }
                   #scanCheckInButton,
                   #scanCheckOutButton,
-                  #scanCancelButton {
+                  #scanCancelButton,
+                  .language-btn {
                     pointer-events: auto !important;
                     touch-action: manipulation !important;
                   }
