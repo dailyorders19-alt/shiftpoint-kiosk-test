@@ -2,6 +2,7 @@ package hu.shiftpoint.kiosk
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -42,6 +43,7 @@ class MainActivity : Activity() {
     private lateinit var configuredPwaUri: Uri
     private var pendingCameraRequest: PermissionRequest? = null
     private var mainFrameLoadFailed = false
+    private var screenPinningRequestedThisSession = false
     private var adminCornerTapCount = 0
     private var firstAdminCornerTapAt = 0L
     private val retryHandler = Handler(Looper.getMainLooper())
@@ -124,6 +126,20 @@ class MainActivity : Activity() {
 
         if (hasFocus) {
             hideSystemBars()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (!screenPinningRequestedThisSession && !isScreenPinned()) {
+            screenPinningRequestedThisSession = true
+            try {
+                startLockTask()
+            } catch (error: RuntimeException) {
+                Log.w(TAG, "Screen pinning could not be started", error)
+                Toast.makeText(this, R.string.screen_pinning_unavailable, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -322,10 +338,30 @@ class MainActivity : Activity() {
                 }
 
                 dialog.dismiss()
-                showAdminLanguageDialog()
+                showAdminSettingsDialog()
             }
         }
         dialog.show()
+    }
+
+    private fun showAdminSettingsDialog() {
+        val adminActions = arrayOf(
+            getString(R.string.admin_action_language),
+            getString(R.string.admin_action_unlock)
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.admin_pin_title)
+            .setItems(adminActions) { dialog, which ->
+                dialog.dismiss()
+                if (which == 0) {
+                    showAdminLanguageDialog()
+                } else {
+                    stopScreenPinning()
+                }
+            }
+            .setNegativeButton(R.string.admin_cancel, null)
+            .show()
     }
 
     private fun showAdminLanguageDialog() {
@@ -352,6 +388,26 @@ class MainActivity : Activity() {
             null
         )
         Toast.makeText(this, R.string.admin_language_saved, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun isScreenPinned(): Boolean {
+        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        return activityManager.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+    }
+
+    private fun stopScreenPinning() {
+        if (!isScreenPinned()) {
+            Toast.makeText(this, R.string.screen_pinning_already_unlocked, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            stopLockTask()
+            Toast.makeText(this, R.string.screen_pinning_stopped, Toast.LENGTH_LONG).show()
+        } catch (error: RuntimeException) {
+            Log.w(TAG, "Screen pinning could not be stopped", error)
+            Toast.makeText(this, R.string.screen_pinning_stop_failed, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun applyKioskTouchRestrictions() {

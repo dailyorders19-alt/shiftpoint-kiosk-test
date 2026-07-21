@@ -16,4 +16,10 @@
     <string name="admin_language_ro">Română (RO)</string>
     <string name="admin_language_en">English (EN)</string>
     <string name="admin_language_saved">A kiosk nyelve elmentve</string>
+    <string name="admin_action_language">Nyelv beállítása</string>
+    <string name="admin_action_unlock">Lezárás feloldása</string>
+    <string name="screen_pinning_unavailable">A képernyőrögzítés nem indítható. Ellenőrizd a tablet biztonsági beállításait.</string>
+    <string name="screen_pinning_stopped">A tesztlezárás feloldva</string>
+    <string name="screen_pinning_already_unlocked">A tesztlezárás már fel van oldva</string>
+    <string name="screen_pinning_stop_failed">A tesztlezárás nem oldható fel</string>
 </resources>
