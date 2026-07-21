@@ -133,13 +133,7 @@ class MainActivity : Activity() {
         super.onResume()
 
         if (!screenPinningRequestedThisSession && !isScreenPinned()) {
-            screenPinningRequestedThisSession = true
-            try {
-                startLockTask()
-            } catch (error: RuntimeException) {
-                Log.w(TAG, "Screen pinning could not be started", error)
-                Toast.makeText(this, R.string.screen_pinning_unavailable, Toast.LENGTH_LONG).show()
-            }
+            startScreenPinning()
         }
     }
 
@@ -347,17 +341,18 @@ class MainActivity : Activity() {
     private fun showAdminSettingsDialog() {
         val adminActions = arrayOf(
             getString(R.string.admin_action_language),
-            getString(R.string.admin_action_unlock)
+            getString(R.string.admin_action_unlock),
+            getString(R.string.admin_action_lock)
         )
 
         AlertDialog.Builder(this)
             .setTitle(R.string.admin_pin_title)
             .setItems(adminActions) { dialog, which ->
                 dialog.dismiss()
-                if (which == 0) {
-                    showAdminLanguageDialog()
-                } else {
-                    stopScreenPinning()
+                when (which) {
+                    0 -> showAdminLanguageDialog()
+                    1 -> stopScreenPinning()
+                    2 -> startScreenPinning()
                 }
             }
             .setNegativeButton(R.string.admin_cancel, null)
@@ -393,6 +388,21 @@ class MainActivity : Activity() {
     private fun isScreenPinned(): Boolean {
         val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
         return activityManager.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+    }
+
+    private fun startScreenPinning() {
+        if (isScreenPinned()) {
+            Toast.makeText(this, R.string.screen_pinning_already_locked, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        screenPinningRequestedThisSession = true
+        try {
+            startLockTask()
+        } catch (error: RuntimeException) {
+            Log.w(TAG, "Screen pinning could not be started", error)
+            Toast.makeText(this, R.string.screen_pinning_unavailable, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun stopScreenPinning() {
