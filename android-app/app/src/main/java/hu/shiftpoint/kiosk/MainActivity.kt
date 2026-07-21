@@ -2,6 +2,7 @@ package hu.shiftpoint.kiosk
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -11,6 +12,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.text.InputType
+import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -27,6 +30,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -48,10 +52,17 @@ class MainActivity : Activity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        try {
+            super.onCreate(savedInstanceState)
+            startKiosk()
+        } catch (error: Throwable) {
+            Log.e(TAG, "Kiosk startup failed", error)
+            showStartupError(error)
+        }
+    }
 
+    private fun startKiosk() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        hideSystemBars()
 
         val pwaUrl = getString(R.string.pwa_url)
         configuredPwaUri = Uri.parse(pwaUrl)
@@ -89,7 +100,23 @@ class MainActivity : Activity() {
 
         configureWebView()
         setContentView(rootContainer)
+        rootContainer.post { hideSystemBars() }
         webView.loadUrl(pwaUrl)
+    }
+
+    private fun showStartupError(error: Throwable) {
+        val details = error.stackTraceToString()
+            .lineSequence()
+            .take(12)
+            .joinToString("\n")
+
+        setContentView(TextView(this).apply {
+            setBackgroundColor(Color.rgb(127, 29, 29))
+            setTextColor(Color.WHITE)
+            textSize = 16f
+            setPadding(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24))
+            text = getString(R.string.startup_error_details, error.javaClass.name, details)
+        })
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -125,11 +152,13 @@ class MainActivity : Activity() {
         retryHandler.removeCallbacks(retryRunnable)
         pendingCameraRequest?.deny()
         pendingCameraRequest = null
-        webView.stopLoading()
-        webView.loadUrl("about:blank")
-        webView.clearHistory()
-        webView.removeAllViews()
-        webView.destroy()
+        if (::webView.isInitialized) {
+            webView.stopLoading()
+            webView.loadUrl("about:blank")
+            webView.clearHistory()
+            webView.removeAllViews()
+            webView.destroy()
+        }
         super.onDestroy()
     }
 
@@ -270,7 +299,59 @@ class MainActivity : Activity() {
         adminCornerTapCount = 0
         firstAdminCornerTapAt = 0L
         hotspot.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        Toast.makeText(this, R.string.admin_unlock_detected, Toast.LENGTH_SHORT).show()
+        showAdminPinDialog()
+    }
+
+    private fun showAdminPinDialog() {
+        val pinInput = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = getString(R.string.admin_pin_hint)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.admin_pin_title)
+            .setView(pinInput)
+            .setNegativeButton(R.string.admin_cancel, null)
+            .setPositiveButton(R.string.admin_continue, null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (pinInput.text.toString() != ADMIN_PIN) {
+                    pinInput.error = getString(R.string.admin_pin_invalid)
+                    return@setOnClickListener
+                }
+
+                dialog.dismiss()
+                showAdminLanguageDialog()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showAdminLanguageDialog() {
+        val languageLabels = arrayOf(
+            getString(R.string.admin_language_hu),
+            getString(R.string.admin_language_ro),
+            getString(R.string.admin_language_en)
+        )
+        val languageCodes = arrayOf("hu", "ro", "en")
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.admin_language_title)
+            .setItems(languageLabels) { dialog, which ->
+                setKioskLanguage(languageCodes[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.admin_cancel, null)
+            .show()
+    }
+
+    private fun setKioskLanguage(language: String) {
+        webView.evaluateJavascript(
+            "document.querySelector('.language-btn[data-lang=\"$language\"]')?.click();",
+            null
+        )
+        Toast.makeText(this, R.string.admin_language_saved, Toast.LENGTH_SHORT).show()
     }
 
     private fun applyKioskTouchRestrictions() {
@@ -400,6 +481,8 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        private const val TAG = "ShiftPointKiosk"
+        private const val ADMIN_PIN = "2026"
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
         private const val NETWORK_RETRY_DELAY_MS = 10_000L
         private const val ADMIN_REQUIRED_TAPS = 5
