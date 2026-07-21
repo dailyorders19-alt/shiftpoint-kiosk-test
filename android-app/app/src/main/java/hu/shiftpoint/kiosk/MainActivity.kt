@@ -60,7 +60,6 @@ class MainActivity : Activity() {
 
     private fun startKiosk() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        hideSystemBars()
 
         val pwaUrl = getString(R.string.pwa_url)
         configuredPwaUri = Uri.parse(pwaUrl)
@@ -98,6 +97,7 @@ class MainActivity : Activity() {
 
         configureWebView()
         setContentView(rootContainer)
+        rootContainer.post { hideSystemBars() }
         webView.loadUrl(pwaUrl)
     }
 
