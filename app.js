@@ -1326,6 +1326,40 @@ function registerAttendanceEvent(employee, source = "camera", forcedType = null)
   return newEvent;
 }
 
+async function registerAttendanceEventAndWait(employee, source = "camera", forcedType = null) {
+  if (!employee || !employee.active) {
+    return null;
+  }
+
+  const now = new Date();
+  const eventType = forcedType === "in" || forcedType === "out"
+    ? forcedType
+    : getNextAttendanceType(employee.id, now);
+
+  const newEvent = {
+    id: `ATT-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    employeeId: employee.id,
+    employeeName: employee.name,
+    department: employee.department || "",
+    type: eventType,
+    source: source,
+    createdAt: now.toISOString(),
+    dateKey: getDateKey(now)
+  };
+
+  const nextEvents = [...attendanceEvents, newEvent];
+  await saveAttendanceEventsAndWait(nextEvents);
+  attendanceEvents.push(newEvent);
+
+  renderInsideList();
+  renderAttendanceList();
+  renderEmployeeProfile();
+  renderStatisticsPage();
+  renderMonthlyAccountingPage();
+
+  return newEvent;
+}
+
 function getNextAttendanceType(employeeId, date = new Date()) {
   const dateKey = getDateKey(date);
 

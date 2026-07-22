@@ -263,6 +263,16 @@ function saveAttendanceEvents(nextEvents) {
   createAutoBackup("attendance-save");
 }
 
+async function saveAttendanceEventsAndWait(nextEvents) {
+  if (!supabaseDb) {
+    throw new Error("A Supabase kapcsolat nem érhető el.");
+  }
+
+  await syncAttendanceEventsToSupabase(nextEvents);
+  saveLocalStorageValue(STORAGE_KEYS.attendanceEvents, nextEvents);
+  createAutoBackup("attendance-save");
+}
+
 async function syncAttendanceEventsToSupabase(nextEvents) {
   if (!supabaseDb) {
     return;

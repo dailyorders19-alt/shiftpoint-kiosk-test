@@ -1,4 +1,4 @@
-const CACHE_NAME = "shiftpoint-v1248";
+const CACHE_NAME = "shiftpoint-v1249";
 
 const FILES_TO_CACHE = [
   "./",

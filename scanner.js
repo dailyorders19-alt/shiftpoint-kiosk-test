@@ -297,7 +297,7 @@ function scanCameraFrame() {
   scannerLoopTimer = setTimeout(scanCameraFrame, 350);
 }
 
-function handleScannedCode(code, source = "camera") {
+async function handleScannedCode(code, source = "camera") {
   const cleanCode = String(code || "").trim();
 
   if (!cleanCode) {
@@ -383,7 +383,29 @@ function handleScannedCode(code, source = "camera") {
     }
   }
 
-  const savedEvent = registerAttendanceEvent(employee, source, dedicatedMode && !autoKioskMode ? scannerRequestedType : null);
+  let savedEvent = null;
+
+  try {
+    savedEvent = dedicatedMode
+      ? await registerAttendanceEventAndWait(employee, source, !autoKioskMode ? scannerRequestedType : null)
+      : registerAttendanceEvent(employee, source);
+  } catch (error) {
+    console.error("Kioszk szervermentési hiba:", error);
+
+    if (source === "camera") {
+      stopCameraScanner(false);
+    }
+
+    playScannerFeedbackSound("error");
+    showDedicatedScanConfirmation(
+      employee,
+      t("scan.operationFailed"),
+      "warning",
+      t("scan.serverSaveFailed")
+    );
+    scheduleDedicatedScannerReset();
+    return;
+  }
   const sourceText = source === "manual"
     ? t("scan.sourceManual")
     : source === "usb"
