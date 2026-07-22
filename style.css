@@ -4971,7 +4971,12 @@ textarea:focus {
 }
 
 .scan-kiosk-active .scanner-camera-box {
-  margin: 0 auto;
+  margin: 0 auto !important;
+}
+
+.scan-kiosk-active .scanner-frame {
+  width: 210px !important;
+  height: 210px !important;
 }
 
 .scan-cancel-button {
